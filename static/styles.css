@@ -1,0 +1,22 @@
+/* styles.css */
+#controlPanel {
+    width: 200px; /* Fixed width for control panel */
+    background-color: #f0f0f0; /* Background color */
+    padding: 10px; /* Add padding */
+    border-right: 1px solid #ccc; /* Border to separate from graphContainer */
+    vertical-align: top; /* Align to the top */
+    display: inline-block; /* Display as inline block */
+    height: 100%; /* Full height */
+    box-sizing: border-box; /* Include padding and border in the width */
+}
+
+#graphContainer {
+    width: calc(100% - 200px); /* Calculate width to take remaining space */
+    background-color: #fff; /* Background color */
+    padding: 10px; /* Add padding */
+    display: inline-block; /* Display as inline block */
+    height: 100%; /* Full height */
+    box-sizing: border-box; /* Include padding and border in the width */
+    vertical-align: top; /* Align to the top */
+}
+
