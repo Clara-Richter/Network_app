@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+from pyngrok import ngrok
 import pandas as pd
 from pyvis.network import Network
 import json
@@ -330,4 +331,6 @@ def update_graph():
     return generate_IOgraph(unchecked_components)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    public_url = ngrok.connect(5000)
+    print(f"Public URL: {public_url}")
+    app.run(port=5000, debug=True)
