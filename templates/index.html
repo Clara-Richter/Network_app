@@ -1,424 +1,145 @@
-<!DOCTYPE html>
+        <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Graph</title>
+    <title>Network Analysis</title>
     <style>
-        /* Increase font size for all text */
         body {
-            font-size: 18px; /* Change to your desired base font size */
+            font-size: 18px;
             font-family: system-ui;
+            margin: 20px;
         }
-
         input, button {
-            font-size: 18px; /* Increase font size for inputs and buttons */
+            font-size: 18px;
             font-family: system-ui;
-        }
-
-        span.options {
-            display: block;
-            margin: 10px;
-            width: 26%;
-            height: 590px;
+            margin: 5px;
             padding: 5px;
-            float: left;
-            border: 1px solid rgb(0, 0, 0);
-            background-color: rgba(200, 125, 230, 0.676);
         }
-
-        span.graph_container {
+        .container {
+            display: flex;
+            gap: 10px;
+        }
+        .options {
+            flex: 1;
+            max-width: 300px;
+            height: 590px;
+            border: 1px solid #000;
+            background-color: rgba(200, 125, 230, 0.676);
+            padding: 10px;
+            overflow-y: auto;
+        }
+        .graph_container {
+            flex: 2;
+            height: 590px;
+            border: 1px solid #000;
+            background-color: #fff;
+        }
+        .filter-buttons button {
             display: block;
-            margin: 10px;
-            width: 68%;
-            height: 580px;
-            padding: 0px;
-            float: right;
-            border: 1px solid rgb(0, 0, 0);
-            background-color: rgb(255, 255, 255);
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px;
+            cursor: pointer;
+        }
+        #loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
         }
     </style>
     <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
-
 </head>
 <body>
     <h1>Network Analysis</h1>
     <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script src="https://unpkg.com/tippy.js@6"></script>
-    <div>
-        <span class="options">
+    <div class="container">
+        <div class="options">
+            <h2>FILTERS:</h2>
+            <div class="filter-buttons">
+                <button onclick="generateGraph('Company')">Company</button>
+                <button onclick="generateGraph('Country')">Country</button>
+                <button onclick="generateGraph('Program')">Program</button>
+                <button onclick="generateGraph('Combatant Command')">Combatant Command</button>
+                <button onclick="generateGraph('Support Infrastructure')">Support Infrastructure</button>
+                <button onclick="generateGraph('Raw Materials')">Raw Materials</button>
+                <button onclick="generateGraph('Terms of Interest')">Terms of Interest</button>
+            </div>
             <br>
             <label for="fileSelect"><b>Upload Excel File:</b></label>
             <input id="fileSelect" type="file" accept=".xlsx, .xls" />
             <br><br>
-            <b>DATA:</b><br>
-            <input type="radio" id="qualitative" name="data" value="Qualitative">
-            <label for="qualitative">Qualitative</label><br>
-            <input type="radio" id="quantitative" name="data" value="Quantitative">
-            <label for="quantitative">Quantitative</label><br>
-            <br>
-
-            <div id="quantitativeOptions" style="display: none;">
-                <b>FUNCTION:</b><br>
-                <b>Enterprise Assessment</b><br>
-                <input type="radio" id="acat1" name="ent_assessment" value="ACAT 1 MDAPs">
-                <label for="acat1">ACAT 1 MDAPs</label><br>
-                <input type="radio" id="acat2" name="ent_assessment" value="ACAT 2 MDAPs">
-                <label for="acat2">ACAT 2 MDAPs</label><br>
-                <input type="radio" id="acat3" name="ent_assessment" value="ACAT 3 MDAPs">
-                <label for="acat3">ACAT 3 MDAPs</label><br>
-                <b>Performance</b><br>
-                <input type="radio" id="sgrowth" name="perf" value="Schedule Growth">
-                <label for="sgrowth">Schedule Growth</label><br>
-                <input type="radio" id="achmnt" name="perf" value="Next MS Achievement (Achmnt)">
-                <label for="achmnt">Next MS Achievement (Achmnt)</label><br>
-                <input type="radio" id="cgrowth" name="perf" value="Cost Growth">
-                <label for="cgrowth">Cost Growth</label><br>
-                <input type="radio" id="unit_cost" name="perf" value="Unit Cost">
-                <label for="unit_cost">Unit Cost</label><br>
-                <br>
-            </div>
-
-            <div id="qualitativeOptions" style="display: none;">
-                <b>FUNCTION:</b><br>
-                <input type="radio" id="costhar" name="metric" value="Cost HAR">
-                <label for="costhar">Cost HAR</label><br>
-                <input type="radio" id="schedulehar" name="metric" value="Schedule HAR">
-                <label for="schedulehar">Schedule HAR</label><br>
-                <!-- <b>Mission Thread Assessment</b><br>
-                <input type="radio" id="missile" name="mission_thread" value="Missile Defense">
-                <label for="missile">Missile Defense</label><br>
-                <input type="radio" id="space_surv" name="mission_thread" value="Space Surveillance">
-                <label for="space_surv">Space Surveillance</label><br>
-                <input type="radio" id="global_strike" name="mission_thread" value="Global Strike">
-                <label for="global_strike">Global Strike</label><br> -->
-                <!-- <b>Metric Area</b><br> -->
-                <input type="radio" id="kpp" name="metric" value="Key Performance Parameters">
-                <label for="kpp">Key Performance Parameters</label><br>
-                <input type="radio" id="dotmlpfp" name="metric" value="DOTMLPFP">
-                <label for="dotmlpfp">DOTmLPFP</label><br>
-                <input type="radio" id="funding" name="metric" value="Funding">
-                <label for="funding">Funding</label><br>
-                <input type="radio" id="ect" name="metric" value="Ect.">
-                <label for="ect">Ect.</label><br>
-                <br>
-                <form id="uploadForm" enctype="multipart/form-data">
-                    <label for="search_term">Search for term(s):</label>
-                    <input type="text" id="search_term" name="search_term"><br>
-                    <button type="button" onclick="submitForm()">Search</button>
-                </form>
-            </div>
-
-            <br>
-            <div id="dotmlpfpCheckboxes" style="display: none;">
-                <!-- Add checkboxes for DOTmLPFP components -->
-                <input type="checkbox" id="checkboxD" checked onclick="toggleNodes('D')">
-                <label for="checkboxD">D</label>
-                <input type="checkbox" id="checkboxO" checked onclick="toggleNodes('O')">
-                <label for="checkboxO">O</label>
-                <input type="checkbox" id="checkboxT" checked onclick="toggleNodes('T')">
-                <label for="checkboxT">T</label>
-                <input type="checkbox" id="checkboxm" checked onclick="toggleNodes('m')">
-                <label for="checkboxm">m</label>
-                <input type="checkbox" id="checkboxL" checked onclick="toggleNodes('L')">
-                <label for="checkboxL">L</label>
-                <input type="checkbox" id="checkboxPr" checked onclick="toggleNodes('Pr')">
-                <label for="checkboxPr">Pr</label>
-                <input type="checkbox" id="checkboxF" checked onclick="toggleNodes('F')">
-                <label for="checkboxF">F</label>
-                <input type="checkbox" id="checkboxPo" checked onclick="toggleNodes('Po')">
-                <label for="checkboxPo">Po</label>
-            </div>
-            <br>
-            <button id="generateIOGraphButton" style="display: none;" onclick="generateIOGraph()">Generate IO Network Graph</button>
-            <button id="generateGrowthGraphButton" style="display: none;" onclick="generateGrowthGraph()">Generate Growth Network Graph</button>
-            <button id="generateHARGraphButton" style="display: none;" onclick="generateHARGraph()">Generate HAR Network Graph</button>
-        </span>
-
-        <span class="graph_container">
-            <span id="graphContainer"></span>
-        </span>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <label for="search_term">Search for term(s):</label>
+                <input type="text" id="search_term" name="search_term"><br>
+                <button type="button" onclick="submitForm()">Search</button>
+            </form>
+        </div>
+        <div class="graph_container">
+            <div id="loading">Loading...</div>
+            <div id="graphContainer"></div>
+        </div>
     </div>
 
-    <!-- <form id="dataForm">
-        <input type="text" id="search_term" name="search_term" placeholder="Enter search term">
-        <input type="file" id="fileSelect" name="file">
-        <button type="button" onclick="submitForm('/generate-IOgraph')">Generate IO Graph</button>
-        <button type="button" onclick="submitForm('/generate-HARgraph')">Generate HAR Graph</button>
-    </form>
-    <div id="graphContainer"></div> -->
-
-
-    <!-- JavaScript code -->
     <script>
-        // Get references to the radio buttons and option divs
-        var qualitativeRadio = document.getElementById('qualitative');
-        var quantitativeRadio = document.getElementById('quantitative');
-        var qualitativeOptions = document.getElementById('qualitativeOptions');
-        var quantitativeOptions = document.getElementById('quantitativeOptions');
-        var dotmlpfpRadio = document.getElementById('dotmlpfp');
-        var kppRadio = document.getElementById('kpp');
-        var fundingRadio = document.getElementById('funding');
-        var sgrowthRadio = document.getElementById("sgrowth");
-        var cgrowthRadio = document.getElementById("cgrowth");
-        var costharRadio = document.getElementById("costhar");
-        var scheduleharRadio = document.getElementById("schedulehar");
-        var ectRadio = document.getElementById('ect');
-        var dotmlpfpCheckboxesDiv = document.getElementById('dotmlpfpCheckboxes');
-
-        // Add event listeners to the radio buttons
-        qualitativeRadio.addEventListener('change', function() {
-            if (qualitativeRadio.checked) {
-                qualitativeOptions.style.display = 'block';
-                quantitativeOptions.style.display = 'none';
-                toggleGenerateGraphButton();
+        function generateGraph(sheetName) {
+            const fileInput = document.getElementById('fileSelect');
+            if (!fileInput.files.length) {
+                alert('Please select an Excel file');
+                return;
             }
-        });
-        quantitativeRadio.addEventListener('change', function() {
-            if (quantitativeRadio.checked) {
-                qualitativeOptions.style.display = 'none';
-                quantitativeOptions.style.display = 'block';
-                toggleGenerateGraphButton();
-            }
-        });
-
-        // Add event listeners to the KPP, Funding, and Ect radio buttons
-        kppRadio.addEventListener('change', toggleGenerateGraphButton);
-        fundingRadio.addEventListener('change', toggleGenerateGraphButton);
-        ectRadio.addEventListener('change', toggleGenerateGraphButton);
-
-        // Function to hide dotmlpfpCheckboxes
-        function hideDotmlpfpCheckboxes() {
-            dotmlpfpCheckboxesDiv.style.display = 'none';
+            submitForm(sheetName);
         }
 
-        // Add event listeners to other radio buttons to hide dotmlpfpCheckboxes
-        kppRadio.addEventListener('change', hideDotmlpfpCheckboxes);
-        fundingRadio.addEventListener('change', hideDotmlpfpCheckboxes);
-        ectRadio.addEventListener('change', hideDotmlpfpCheckboxes);
-        quantitativeRadio.addEventListener('change', hideDotmlpfpCheckboxes);
-
-        // Add event listener to the DOTmLPFP radio button
-        dotmlpfpRadio.addEventListener('change', function() {
-            if (dotmlpfpRadio.checked) {
-                dotmlpfpCheckboxesDiv.style.display = 'block';
-            } else {
-                dotmlpfpCheckboxesDiv.style.display = 'none';
-            }
-        });
-
-
-        // Function to show or hide the "Generate Network Graph" button based on radio button selection
-        function toggleGenerateGraphButton() {
-            var generateIOGraphButton = document.getElementById("generateIOGraphButton");
-            var generateGrowthGraphButton = document.getElementById("generateGrowthGraphButton");
-            var generateHARGraphButton = document.getElementById("generateHARGraphButton");
-
-            // If "Quantitative" and "Growth" are selected, show the button; otherwise, hide it
-            if (quantitativeRadio.checked && (sgrowthRadio.checked || cgrowthRadio.checked)) {
-                generateGrowthGraphButton.style.display = "block";
-            } else {
-                generateGrowthGraphButton.style.display = "none";
-            }
-
-            // If "Qualitative" and "HAR" are selected, show the button; otherwise, hide it
-            if (qualitativeRadio.checked && (costharRadio.checked || scheduleharRadio.checked)) {
-                generateHARGraphButton.style.display = "block";
-            } else {
-                generateHARGraphButton.style.display = "none";
-            }
-
-            // If any of the relevant radio buttons are selected, show the button; otherwise, hide it
-            if (qualitativeRadio.checked && (kppRadio.checked || dotmlpfpRadio.checked || fundingRadio.checked)) {
-                generateIOGraphButton.style.display = "block";
-            } else {
-                generateIOGraphButton.style.display = "none";
-            }
-
-            // If "Quantitative" is selected, hide the button
-            if (quantitativeRadio.checked) {
-                generateIOGraphButton.style.display = "none";
-            }
-        }
-
-        // Attach onchange event listener to relevant radio buttons
-        document.getElementById("qualitative").onchange = toggleGenerateGraphButton;
-        document.getElementById("quantitative").onchange = toggleGenerateGraphButton;
-        document.getElementById("kpp").onchange = toggleGenerateGraphButton;
-        document.getElementById("dotmlpfp").onchange = toggleGenerateGraphButton;
-        document.getElementById("funding").onchange = toggleGenerateGraphButton;
-        document.getElementById("sgrowth").onchange = toggleGenerateGraphButton;
-        document.getElementById("cgrowth").onchange = toggleGenerateGraphButton;
-        costharRadio.addEventListener('change', toggleGenerateGraphButton);
-        scheduleharRadio.addEventListener('change', toggleGenerateGraphButton);
-        
-
-        // Function to generate IO Network Graph
-        function generateIOGraph() {
-            submitForm('/generate-IOgraph');
-            var fileInput = document.getElementById('fileSelect');
-            var file = fileInput.files[0];
-            var formData = new FormData();
-            formData.append('file', file);
-
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/generate-IOgraph", true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var filename = xhr.responseText;
-                    var iframe = document.createElement('iframe');
-                    iframe.srcdoc = filename;
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    var graphContainer = document.getElementById('graphContainer');
-                    graphContainer.innerHTML = '';
-                    graphContainer.appendChild(iframe);
-                }
-            };
-            xhr.send(formData);
-        }
-
-        function generateGrowthGraph() {
-            var fileInput = document.getElementById('fileSelect');
-            var file = fileInput.files[0];
-            var formData = new FormData();
-            formData.append('file', file);
-
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/generate-GrowthGraph", true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var filename = xhr.responseText;
-                    var iframe = document.createElement('iframe');
-                    iframe.srcdoc = filename;
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    var graphContainer = document.getElementById('graphContainer');
-                    graphContainer.innerHTML = '';
-                    graphContainer.appendChild(iframe);
-                }
-            };
-            xhr.send(formData);
-        }
-
-        function generateHARGraph() {
-            submitForm('/generate-HARGraph');
-            var fileInput = document.getElementById('fileSelect');
-            var file = fileInput.files[0];
-            var formData = new FormData();
-            formData.append('file', file);
-
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/generate-HARGraph", true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var filename = xhr.responseText;
-                    var iframe = document.createElement('iframe');
-                    iframe.srcdoc = filename;
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    var graphContainer = document.getElementById('graphContainer');
-                    graphContainer.innerHTML = '';
-                    graphContainer.appendChild(iframe);
-                }
-            };
-            xhr.send(formData);
-        }
-
-        // Function to toggle visibility of nodes based on checkbox state
-        function toggleNodes(component) {
-            var fileInput = document.getElementById('fileSelect');
-            var file = fileInput.files[0];
-            var checkbox = document.getElementById('checkbox' + component);
-            var isChecked = checkbox.checked;
-            var components = {};
-            var checkboxes = document.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(function(checkbox) {
-                components[checkbox.id.replace('checkbox', '')] = checkbox.checked;
-            });
-
-            var formData = new FormData();
-            formData.append('file', file);
-            formData.append('checkboxState', JSON.stringify(components));
-
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/generate-IOgraph", true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var filename = xhr.responseText;
-                    var iframe = document.createElement('iframe');
-                    iframe.srcdoc = filename;
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    var graphContainer = document.getElementById('graphContainer');
-                    graphContainer.innerHTML = '';
-                    graphContainer.appendChild(iframe);
-                }
-            };
-            xhr.send(formData);
-        }
-
-        // Function to submit form based on selected endpoint
-        function submitForm() {
-            var searchTerm = document.getElementById('search_term').value;
-            var fileInput = document.getElementById('fileSelect');
-            var file = fileInput.files[0];
-            var formData = new FormData();
-            formData.append('file', file);
-            formData.append('search_term', searchTerm);
-
-            var endpoint;
-            if (document.getElementById('generateIOGraphButton').style.display === 'block') {
-                endpoint = "/generate-IOgraph";
-            } else if (document.getElementById('generateHARGraphButton').style.display === 'block') {
-                endpoint = "/generate-HARGraph";
-            } else {
-                alert('No graph type selected');
+        function submitForm(sheetName) {
+            const fileInput = document.getElementById('fileSelect');
+            if (!fileInput.files.length) {
+                alert('Please select an Excel file');
                 return;
             }
 
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", endpoint, true);
+            const file = fileInput.files[0];
+            const searchTerm = document.getElementById('search_term').value;
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('sheet_name', sheetName || 'Program'); // Default to Program if none specified
+            formData.append('search_term', searchTerm);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/generate-graph", true);
+            
+            // Show loading indicator
+            const loading = document.getElementById('loading');
+            const graphContainer = document.getElementById('graphContainer');
+            loading.style.display = 'block';
+            graphContainer.innerHTML = '';
+
             xhr.onreadystatechange = function () {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var filename = xhr.responseText;
-                    var iframe = document.createElement('iframe');
-                    iframe.srcdoc = filename;
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    var graphContainer = document.getElementById('graphContainer');
-                    graphContainer.innerHTML = '';
-                    graphContainer.appendChild(iframe);
+                if (xhr.readyState === 4) {
+                    loading.style.display = 'none';
+                    if (xhr.status === 200) {
+                        const iframe = document.createElement('iframe');
+                        iframe.srcdoc = xhr.responseText;
+                        iframe.style.width = '100%';
+                        iframe.style.height = '100%';
+                        iframe.style.border = 'none';
+                        graphContainer.innerHTML = '';
+                        graphContainer.appendChild(iframe);
+                    } else {
+                        let errorMessage = 'Failed to generate graph';
+                        try {
+                            const error = JSON.parse(xhr.responseText);
+                            errorMessage = error.error || errorMessage;
+                        } catch (e) {
+                            // Non-JSON response
+                        }
+                        alert('Error: ' + errorMessage);
+                    }
                 }
             };
             xhr.send(formData);
         }
-
-        // // Function to submit form
-        // function submitForm(endpoint) {
-        //     var searchTerm = document.getElementById('search_term').value;
-        //     var fileInput = document.getElementById('fileSelect');
-        //     var file = fileInput.files[0];
-        //     var formData = new FormData();
-        //     formData.append('file', file);
-        //     formData.append('search_term', searchTerm);
-
-        //     var xhr = new XMLHttpRequest();
-        //     xhr.open("POST", endpoint, true);
-        //     xhr.onreadystatechange = function () {
-        //         if (xhr.readyState == 4 && xhr.status == 200) {
-        //             var filename = xhr.responseText;
-        //             var iframe = document.createElement('iframe');
-        //             iframe.srcdoc = filename;
-        //             iframe.style.width = '100%';
-        //             iframe.style.height = '100%';
-        //             var graphContainer = document.getElementById(graphContainer);
-        //             graphContainer.innerHTML = '';
-        //             graphContainer.appendChild(iframe);
-        //         }
-        //     };
-        //     xhr.send(formData);
-        // }
     </script>
 </body>
 </html>
