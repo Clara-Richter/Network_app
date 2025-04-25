@@ -22,10 +22,23 @@ def validate_excel(df, sheet_name):
     logger.debug(f"Expected columns: {required_cols}")
     actual_cols = list(df.columns)
     logger.debug(f"Actual columns: {actual_cols}")
-    missing_cols = [col for col in required_cols if col not in df.columns]
+    
+    # Create a mapping of normalized actual column names (lowercase, trimmed)
+    normalized_actual_cols = {str(col).lower().strip(): col for col in actual_cols}
+    missing_cols = []
+    
+    # Check for each required column
+    for col in required_cols:
+        if col.lower().strip() not in normalized_actual_cols:
+            missing_cols.append(col)
+    
     if missing_cols:
         logger.error(f"Missing columns: {missing_cols}")
         return False, f"Missing columns: {', '.join(missing_cols)}"
+    
+    # Normalize the DataFrame column names to match expected case
+    df.columns = [normalized_actual_cols.get(col.lower().strip(), col) for col in df.columns]
+    logger.debug(f"Normalized columns: {list(df.columns)}")
     return True, None
 
 def save_graph_with_legend(net, filename, legend_html):
@@ -33,6 +46,21 @@ def save_graph_with_legend(net, filename, legend_html):
     logger.debug(f"Saving graph to {filename}")
     custom_css = """
     <style>
+     html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #mynetwork {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        #mynetwork > div, #mynetwork canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
         .vis-tooltip {
             max-width: 300px;
             white-space: pre-wrap;
@@ -145,7 +173,7 @@ def generate_graph():
         article_node_id = f"{entity} - {article} - {idx}"  # Ensure uniqueness with row index
         article_label = f"{article} ({date})"
         logger.debug(f"Adding article node: {article_node_id}")
-        net.add_node(article_node_id, color="white", label=article_label, title=sentences)
+        net.add_node(article_node_id, color="pink", label=article_label, title=sentences)
         net.add_edge(entity, article_node_id, color="black")
 
     # Handle search term (highlight matching nodes)
@@ -175,7 +203,7 @@ def generate_graph():
     <div class="legend">
         <div class="legend-item"><div class="legend-color" style="background-color: blue;"></div>Root Node</div>
         <div class="legend-item"><div class="legend-color" style="background-color: grey;"></div>Entities</div>
-        <div class="legend-item"><div class="legend-color" style="background-color: white;"></div>Articles</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: pink;"></div>Articles</div>
         <div class="legend-item"><div class="legend-color" style="background-color: purple;"></div>Search Term</div>
     </div>
     """
