@@ -65,7 +65,23 @@ def save_graph(net, filename):
             font-family: Arial, sans-serif;
             font-size: 14px;
         }
+        .debug-box {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background-color: red;
+            color: white;
+            text-align: center;
+            line-height: 50px;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+        }
     </style>
+    """
+    debug_html = """
+    <div class="debug-box">Debug: This box should be at the bottom of the graph container (590px tall).</div>
     """
     temp_dir = tempfile.gettempdir()
     temp_filename = os.path.join(temp_dir, f"graph_{uuid4().hex}.html")
@@ -75,6 +91,7 @@ def save_graph(net, filename):
         f.write("<html>\n")
         f.write(custom_css)
         f.write(net.html)
+        f.write(debug_html)
         f.write("</html>")
     with open(temp_filename, "r") as f:
         graph_html = f.read()
@@ -125,7 +142,7 @@ def generate_graph():
 
     # Initialize network
     logger.debug("Initializing network graph")
-    net = Network(height="590px", width="100%", notebook=True)  # Removed cdn_resources
+    net = Network(height="590px", width="100%", notebook=True)
 
     # Root node: Sheet name (e.g., "Company", "Country", "Program")
     root_node = sheet_name
@@ -170,7 +187,11 @@ def generate_graph():
     logger.debug("Setting physics options")
     net.set_options(json.dumps({
         "physics": {
-            "barnesHut": {"centralGravity": 0},
+            "barnesHut": {
+                "centralGravity": 0,
+                "springLength": 200,
+                "avoidOverlap": 1
+            },
             "minVelocity": 0.75
         }
     }))
