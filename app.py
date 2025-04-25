@@ -42,57 +42,12 @@ def validate_excel(df, sheet_name):
     return True, None
 
 def save_graph(net, filename):
-    """Save the network graph with custom CSS to a temporary file."""
+    """Save the network graph to a temporary file with default pyvis styles."""
     logger.debug(f"Saving graph to {filename}")
-    custom_css = """
-    <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        #mynetwork {
-            width: 100% !important;
-            height: 590px !important;
-        }
-        #mynetwork canvas {
-            width: 100% !important;
-            height: 590px !important;
-        }
-        .vis-tooltip {
-            max-width: 300px;
-            white-space: pre-wrap;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-        }
-        .debug-box {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 50px;
-            background-color: red;
-            color: white;
-            text-align: center;
-            line-height: 50px;
-            font-family: Arial, sans-serif;
-            z-index: 1000;
-        }
-    </style>
-    """
-    debug_html = """
-    <div class="debug-box">Debug: This box should be at the bottom of the graph container (590px tall).</div>
-    """
     temp_dir = tempfile.gettempdir()
     temp_filename = os.path.join(temp_dir, f"graph_{uuid4().hex}.html")
     logger.debug(f"Saving to temporary file: {temp_filename}")
     net.save_graph(temp_filename)
-    with open(temp_filename, "w") as f:
-        f.write("<html>\n")
-        f.write(custom_css)
-        f.write(net.html)
-        f.write(debug_html)
-        f.write("</html>")
     with open(temp_filename, "r") as f:
         graph_html = f.read()
     os.remove(temp_filename)  # Clean up
