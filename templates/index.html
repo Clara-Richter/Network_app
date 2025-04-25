@@ -123,7 +123,13 @@
                 if (xhr.readyState === 4) {
                     loading.style.display = 'none';
                     if (xhr.status === 200) {
-                        graphContainer.innerHTML = xhr.responseText;  // Render directly instead of using iframe
+                        const iframe = document.createElement('iframe');
+                        iframe.srcdoc = xhr.responseText;
+                        iframe.style.width = '100%';
+                        iframe.style.height = '100%';
+                        iframe.style.border = 'none';
+                        graphContainer.innerHTML = '';
+                        graphContainer.appendChild(iframe);
                     } else {
                         let errorMessage = 'Failed to generate graph';
                         try {
@@ -132,7 +138,7 @@
                         } catch (e) {
                             // Non-JSON response
                         }
-                        alert('Error: ' + errorMessage);ge);
+                        alert('Error: ' + errorMessage);
                     }
                 }
             };
