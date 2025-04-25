@@ -2,15 +2,15 @@ from flask import Flask, request, jsonify, render_template
 from pyngrok import ngrok
 import pandas as pd
 from pyvis.network import Network
-import json
 import html
 from uuid import uuid4
 
 app = Flask(__name__)
 
-def validate_excel(df, required_columns):
+def validate_excel(df, sheet_name):
     """Validate that the Excel sheet contains required columns."""
-    missing_cols = [col for col in required_columns if col not in df.columns]
+    required_cols = ['Article', 'Date', f'{sheet_name} mentioned', f'{sheet_name} Sentences']
+    missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
         return False, f"Missing columns: {', '.join(missing_cols)}"
     return True, None
@@ -76,33 +76,40 @@ def generate_graph():
         df = pd.read_excel(file, sheet_name=sheet_name, header=0)
     except Exception as e:
         return jsonify({"error": f"Failed to read Excel sheet '{sheet_name}': {str(e)}"}), 400
-    
-    # Validate required columns (adjust based on your data structure)
-    required_cols = ['Node', 'Status', 'Details']  # Assuming generic columns; adjust as needed
-    valid, error = validate_excel(df, required_cols)
+
+    # Validate required columns for the sheet
+    valid, error = validate_excel(df, sheet_name)
     if not valid:
         return jsonify({"error": error}), 400
 
     # Initialize network
     net = Network(height="590px", width="100%", notebook=True, cdn_resources='remote')
-    
-    # Add nodes
-    nodes = df['Node'].unique()
-    for node in nodes:
-        color = 'grey'  # Default for parent nodes
-        net.add_node(node, color=color)
 
-    # Add child nodes and edges
+    # Root node: Sheet name (e.g., "Company", "Country", "Program")
+    root_node = sheet_name
+    net.add_node(root_node, color="blue", label=root_node)
+
+    # First-level nodes: Unique values from "[sheet_name] mentioned"
+    entities = df[f'{sheet_name} mentioned'].unique()
+    for entity in entities:
+        net.add_node(entity, color="grey", label=entity)
+        net.add_edge(root_node, entity, color="grey")
+
+    # Second-level nodes: Articles for each entity
     for _, row in df.iterrows():
-        node_id = f"{row['Node']} - {row['Details']}"
-        title = row['Details'] if pd.notnull(row['Details']) else "No details"
-        color = {'Green': 'green', 'Yellow': 'yellow', 'Red': 'red'}.get(row['Status'], 'white')
-        net.add_node(node_id, color=color, label=str(row['Details']), title=title)
-        net.add_edge(row['Node'], node_id)
+        entity = row[f'{sheet_name} mentioned']
+        article = row['Article']
+        sentences = row[f'{sheet_name} Sentences'] if pd.notnull(row[f'{sheet_name} Sentences']) else "No details"
+        date = row['Date'] if pd.notnull(row['Date']) else "Unknown date"
+        article_node_id = f"{entity} - {article}"
+        # Include the date in the label for more context
+        article_label = f"{article} ({date})"
+        net.add_node(article_node_id, color="white", label=article_label, title=sentences)
+        net.add_edge(entity, article_node_id, color="black")
 
     # Handle search term (highlight matching nodes)
     if search_term:
-        df['Details'] = df['Details'].fillna('')
+        df[f'{sheet_name} Sentences'] = df[f'{sheet_name} Sentences'].fillna('')
         net.add_node(search_term, color="purple", label="Search: " + search_term)
         matching_nodes = []
         for node in net.nodes:
@@ -110,12 +117,6 @@ def generate_graph():
                 matching_nodes.append(node['id'])
         for node_id in matching_nodes:
             net.add_edge(node_id, search_term, color="black")
-
-    # Add a central node (e.g., "Network Core")
-    central_node = "Network Core"
-    net.add_node(central_node, color="blue", label=central_node)
-    for node in nodes:
-        net.add_edge(node, central_node, color="grey")
 
     # Set physics options
     net.set_options(json.dumps({
@@ -128,9 +129,10 @@ def generate_graph():
     # Define legend
     legend_html = """
     <div class="legend">
-        <div class="legend-item"><div class="legend-color" style="background-color: green;"></div>On Track</div>
-        <div class="legend-item"><div class="legend-color" style="background-color: yellow;"></div>Issues</div>
-        <div class="legend-item"><div class="legend-color" style="background-color: red;"></div>Critical Issues</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: blue;"></div>Root Node</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: grey;"></div>Entities</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: white;"></div>Articles</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: purple;"></div>Search Term</div>
     </div>
     """
 
