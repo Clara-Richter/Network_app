@@ -169,8 +169,12 @@ def generate_graph():
     # Set physics options
     logger.debug("Setting physics options")
     net.set_options(json.dumps({
-        "physics": {
-            "barnesHut": {"centralGravity": 0},
+        "physics"{
+            "barnesHut": {
+                "centralGravity": 0,
+                "springLength": 200,  # Increase distance between nodes
+                "avoidOverlap": 1     # Prevent nodes from overlapping
+            },
             "minVelocity": 0.75
         }
     }))
