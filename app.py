@@ -46,6 +46,19 @@ def save_graph_with_legend(net, filename, legend_html):
     logger.debug(f"Saving graph to {filename}")
     custom_css = """
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #mynetwork {
+            width: 100% !important;
+            height: 590px !important; /* Match the intended height */
+        }
+        #mynetwork canvas {
+            width: 100% !important;
+            height: 590px !important; /* Ensure the canvas fills the container */
+        }
         .vis-tooltip {
             max-width: 300px;
             white-space: pre-wrap;
