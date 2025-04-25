@@ -42,7 +42,6 @@ def validate_excel(df, sheet_name):
     return True, None
 
 def save_graph(net, filename):
-    """Save the network graph with custom CSS to a temporary file."""
     logger.debug(f"Saving graph to {filename}")
     custom_css = """
     <style>
@@ -53,11 +52,11 @@ def save_graph(net, filename):
         }
         #mynetwork {
             width: 100% !important;
-            height: 590px !important; /* Match the intended height */
+            height: 590px !important;
         }
         #mynetwork canvas {
             width: 100% !important;
-            height: 590px !important; /* Ensure the canvas fills the container */
+            height: 590px !important;
         }
         .vis-tooltip {
             max-width: 300px;
@@ -65,7 +64,23 @@ def save_graph(net, filename):
             font-family: Arial, sans-serif;
             font-size: 14px;
         }
+        .debug-box {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background-color: red;
+            color: white;
+            text-align: center;
+            line-height: 50px;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+        }
     </style>
+    """
+    debug_html = """
+    <div class="debug-box">Debug: This box should be at the bottom of the graph container (590px tall).</div>
     """
     temp_dir = tempfile.gettempdir()
     temp_filename = os.path.join(temp_dir, f"graph_{uuid4().hex}.html")
@@ -75,6 +90,7 @@ def save_graph(net, filename):
         f.write("<html>\n")
         f.write(custom_css)
         f.write(net.html)
+        f.write(debug_html)
         f.write("</html>")
     with open(temp_filename, "r") as f:
         graph_html = f.read()
