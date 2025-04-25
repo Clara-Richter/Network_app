@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 def validate_excel(df, sheet_name):
-    """Validate that the Excel sheet contains required columns."""
+    """Validate that the Excel sheet contains required columns, ignoring case and whitespace."""
     logger.debug(f"Validating sheet: {sheet_name}")
     required_cols = ['Article', 'Date', f'{sheet_name} mentioned', f'{sheet_name} Sentences']
     logger.debug(f"Expected columns: {required_cols}")
@@ -46,21 +46,6 @@ def save_graph_with_legend(net, filename, legend_html):
     logger.debug(f"Saving graph to {filename}")
     custom_css = """
     <style>
-     html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-        #mynetwork {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        #mynetwork > div, #mynetwork canvas {
-            width: 100% !important;
-            height: 100% !important;
-        }
         .vis-tooltip {
             max-width: 300px;
             white-space: pre-wrap;
@@ -173,7 +158,7 @@ def generate_graph():
         article_node_id = f"{entity} - {article} - {idx}"  # Ensure uniqueness with row index
         article_label = f"{article} ({date})"
         logger.debug(f"Adding article node: {article_node_id}")
-        net.add_node(article_node_id, color="pink", label=article_label, title=sentences)
+        net.add_node(article_node_id, color="white", label=article_label, title=sentences)
         net.add_edge(entity, article_node_id, color="black")
 
     # Handle search term (highlight matching nodes)
@@ -203,7 +188,7 @@ def generate_graph():
     <div class="legend">
         <div class="legend-item"><div class="legend-color" style="background-color: blue;"></div>Root Node</div>
         <div class="legend-item"><div class="legend-color" style="background-color: grey;"></div>Entities</div>
-        <div class="legend-item"><div class="legend-color" style="background-color: pink;"></div>Articles</div>
+        <div class="legend-item"><div class="legend-color" style="background-color: white;"></div>Articles</div>
         <div class="legend-item"><div class="legend-color" style="background-color: purple;"></div>Search Term</div>
     </div>
     """
