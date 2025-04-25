@@ -169,7 +169,7 @@ def generate_graph():
     # Set physics options
     logger.debug("Setting physics options")
     net.set_options(json.dumps({
-        "physics"{
+        "physics": {
             "barnesHut": {
                 "centralGravity": 0,
                 "springLength": 200,  # Increase distance between nodes
