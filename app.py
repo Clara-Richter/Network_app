@@ -7,6 +7,7 @@ from uuid import uuid4
 import logging
 import tempfile
 import os
+import json
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
