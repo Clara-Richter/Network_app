@@ -1,4 +1,4 @@
-        <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -34,6 +34,14 @@
             height: 590px;
             border: 1px solid #000;
             background-color: #fff;
+            position: relative; /* Ensure positioning context for children */
+            overflow: hidden; /* Prevent overflow issues */
+        }
+        .graph_container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block; /* Prevent inline-block spacing issues */
         }
         .filter-buttons button {
             display: block;
@@ -46,6 +54,10 @@
             display: none;
             text-align: center;
             padding: 20px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
     </style>
     <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
@@ -64,7 +76,6 @@
                 <button onclick="generateGraph('Combatant Command')">Combatant Command</button>
                 <button onclick="generateGraph('Support Infrastructure')">Support Infrastructure</button>
                 <button onclick="generateGraph('Raw Materials')">Raw Materials</button>
-                <button onclick="generateGraph('Terms of Interest')">Terms of Interest</button>
             </div>
             <br>
             <label for="fileSelect"><b>Upload Excel File:</b></label>
