@@ -4,19 +4,32 @@ import pandas as pd
 from pyvis.network import Network
 import html
 from uuid import uuid4
+import logging
+import tempfile
+import os
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
 def validate_excel(df, sheet_name):
     """Validate that the Excel sheet contains required columns."""
+    logger.debug(f"Validating sheet: {sheet_name}")
     required_cols = ['Article', 'Date', f'{sheet_name} mentioned', f'{sheet_name} Sentences']
+    logger.debug(f"Expected columns: {required_cols}")
+    actual_cols = list(df.columns)
+    logger.debug(f"Actual columns: {actual_cols}")
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
+        logger.error(f"Missing columns: {missing_cols}")
         return False, f"Missing columns: {', '.join(missing_cols)}"
     return True, None
 
 def save_graph_with_legend(net, filename, legend_html):
-    """Save the network graph with custom CSS and legend."""
+    """Save the network graph with custom CSS and legend to a temporary file."""
+    logger.debug(f"Saving graph to {filename}")
     custom_css = """
     <style>
         .vis-tooltip {
@@ -47,68 +60,96 @@ def save_graph_with_legend(net, filename, legend_html):
         }
     </style>
     """
-    net.save_graph(filename)
-    with open(filename, "w") as f:
+    temp_dir = tempfile.gettempdir()
+    temp_filename = os.path.join(temp_dir, f"graph_{uuid4().hex}.html")
+    logger.debug(f"Saving to temporary file: {temp_filename}")
+    net.save_graph(temp_filename)
+    with open(temp_filename, "w") as f:
         f.write("<html>\n")
         f.write(custom_css)
         f.write(net.html)
         f.write(legend_html)
         f.write("</html>")
-    with open(filename, "r") as f:
-        return f.read()
+    with open(temp_filename, "r") as f:
+        graph_html = f.read()
+    os.remove(temp_filename)  # Clean up
+    return graph_html
 
 @app.route('/')
 def index():
     """Render the main page."""
+    logger.info("Rendering index page")
     return render_template('index.html')
 
 @app.route('/generate-graph', methods=['POST'])
 def generate_graph():
     """Generate a network graph based on the selected Excel sheet."""
+    logger.info("Received request to generate graph")
+    
+    # Check if file is uploaded
     if 'file' not in request.files:
+        logger.error("No file uploaded in request")
         return jsonify({"error": "No file uploaded"}), 400
     
     file = request.files['file']
     sheet_name = request.form.get('sheet_name')
     search_term = html.escape(request.form.get('search_term', ''))
+    
+    logger.debug(f"Sheet name: {sheet_name}")
+    logger.debug(f"Search term: {search_term}")
+    
+    if not sheet_name:
+        logger.error("No sheet name provided")
+        return jsonify({"error": "No sheet name provided"}), 400
 
+    # Read the Excel sheet
     try:
+        logger.debug(f"Reading Excel sheet: {sheet_name}")
         df = pd.read_excel(file, sheet_name=sheet_name, header=0)
+        logger.debug(f"Sheet {sheet_name} loaded successfully with shape: {df.shape}")
     except Exception as e:
+        logger.error(f"Failed to read Excel sheet '{sheet_name}': {str(e)}")
         return jsonify({"error": f"Failed to read Excel sheet '{sheet_name}': {str(e)}"}), 400
 
     # Validate required columns for the sheet
     valid, error = validate_excel(df, sheet_name)
     if not valid:
+        logger.error(f"Validation failed for sheet {sheet_name}: {error}")
         return jsonify({"error": error}), 400
 
     # Initialize network
+    logger.debug("Initializing network graph")
     net = Network(height="590px", width="100%", notebook=True, cdn_resources='remote')
 
     # Root node: Sheet name (e.g., "Company", "Country", "Program")
     root_node = sheet_name
+    logger.debug(f"Adding root node: {root_node}")
     net.add_node(root_node, color="blue", label=root_node)
 
     # First-level nodes: Unique values from "[sheet_name] mentioned"
     entities = df[f'{sheet_name} mentioned'].unique()
+    logger.debug(f"Entities found: {entities}")
     for entity in entities:
-        net.add_node(entity, color="grey", label=entity)
-        net.add_edge(root_node, entity, color="grey")
+        entity_str = str(entity) if pd.notnull(entity) else "Unknown Entity"
+        net.add_node(entity_str, color="grey", label=entity_str)
+        net.add_edge(root_node, entity_str, color="grey")
 
     # Second-level nodes: Articles for each entity
-    for _, row in df.iterrows():
-        entity = row[f'{sheet_name} mentioned']
-        article = row['Article']
+    logger.debug("Adding article nodes and edges")
+    for idx, row in df.iterrows():
+        entity = str(row[f'{sheet_name} mentioned']) if pd.notnull(row[f'{sheet_name} mentioned']) else "Unknown Entity"
+        article = str(row['Article']) if pd.notnull(row['Article']) else "Unknown Article"
         sentences = row[f'{sheet_name} Sentences'] if pd.notnull(row[f'{sheet_name} Sentences']) else "No details"
-        date = row['Date'] if pd.notnull(row['Date']) else "Unknown date"
-        article_node_id = f"{entity} - {article}"
-        # Include the date in the label for more context
+        date = str(row['Date']) if pd.notnull(row['Date']) else "Unknown date"
+        article_node_id = f"{entity} - {article} - {idx}"  # Ensure uniqueness with row index
         article_label = f"{article} ({date})"
+        logger.debug(f"Adding article node: {article_node_id}")
         net.add_node(article_node_id, color="white", label=article_label, title=sentences)
         net.add_edge(entity, article_node_id, color="black")
 
     # Handle search term (highlight matching nodes)
     if search_term:
+        logger.debug(f"Processing search term: {search_term}")
         df[f'{sheet_name} Sentences'] = df[f'{sheet_name} Sentences'].fillna('')
         net.add_node(search_term, color="purple", label="Search: " + search_term)
         matching_nodes = []
@@ -117,8 +158,10 @@ def generate_graph():
                 matching_nodes.append(node['id'])
         for node_id in matching_nodes:
             net.add_edge(node_id, search_term, color="black")
+        logger.debug(f"Found {len(matching_nodes)} nodes matching search term")
 
     # Set physics options
+    logger.debug("Setting physics options")
     net.set_options(json.dumps({
         "physics": {
             "barnesHut": {"centralGravity": 0},
@@ -137,11 +180,14 @@ def generate_graph():
     """
 
     # Save and return graph
-    filename = f"static/graph_{uuid4().hex}.html"
+    filename = f"graph_{uuid4().hex}.html"
+    logger.debug(f"Generated graph, saving to {filename}")
     graph_html = save_graph_with_legend(net, filename, legend_html)
+    logger.info("Graph generated successfully")
     return graph_html
 
 if __name__ == '__main__':
     public_url = ngrok.connect(5000)
     print(f"Public URL: {public_url}")
+    logger.info("Starting Flask server")
     app.run(port=5000)
