@@ -41,8 +41,8 @@ def validate_excel(df, sheet_name):
     logger.debug(f"Normalized columns: {list(df.columns)}")
     return True, None
 
-def save_graph_with_legend(net, filename, legend_html):
-    """Save the network graph with custom CSS and legend to a temporary file."""
+def save_graph(net, filename):
+    """Save the network graph with custom CSS to a temporary file."""
     logger.debug(f"Saving graph to {filename}")
     custom_css = """
     <style>
@@ -65,26 +65,6 @@ def save_graph_with_legend(net, filename, legend_html):
             font-family: Arial, sans-serif;
             font-size: 14px;
         }
-        .legend {
-            position: absolute;
-            top: 20px;
-            left: 1%;
-            background-color: rgba(255, 255, 255, 0.8);
-            border: 1px solid #999;
-            padding: 8px;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-        }
-        .legend-item {
-            margin-bottom: 5px;
-        }
-        .legend-color {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            margin-right: 5px;
-            border: 1px solid #999;
-        }
     </style>
     """
     temp_dir = tempfile.gettempdir()
@@ -95,7 +75,6 @@ def save_graph_with_legend(net, filename, legend_html):
         f.write("<html>\n")
         f.write(custom_css)
         f.write(net.html)
-        f.write(legend_html)
         f.write("</html>")
     with open(temp_filename, "r") as f:
         graph_html = f.read()
@@ -196,20 +175,10 @@ def generate_graph():
         }
     }))
 
-    # Define legend
-    legend_html = """
-    <div class="legend">
-        <div class="legend-item"><div class="legend-color" style="background-color: blue;"></div>Root Node</div>
-        <div class="legend-item"><div class="legend-color" style="background-color: grey;"></div>Entities</div>
-        <div class="legend-item"><div class="legend-color" style="background-color: white;"></div>Articles</div>
-        <div class="legend-item"><div class="legend-color" style="background-color: purple;"></div>Search Term</div>
-    </div>
-    """
-
     # Save and return graph
     filename = f"graph_{uuid4().hex}.html"
     logger.debug(f"Generated graph, saving to {filename}")
-    graph_html = save_graph_with_legend(net, filename, legend_html)
+    graph_html = save_graph(net, filename)
     logger.info("Graph generated successfully")
     return graph_html
 
