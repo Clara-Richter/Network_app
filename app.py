@@ -48,24 +48,39 @@ def save_graph(net, filename):
     custom_js = """
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Ensure network is defined by pyvis
-            if (typeof network !== 'undefined') {
-                network.on('click', function(params) {
-                    if (params.nodes.length > 0) {
-                        const nodeId = params.nodes[0];
-                        const node = network.body.nodes[nodeId];
-                        // Check if the node is an article node (grey square)
-                        if (node.options.shape === 'square' && node.options.color === 'lightgrey') {
-                            const sentences = node.options.title || 'No sentences available.';
-                            // Send the sentences to the parent window
-                            window.parent.postMessage({
-                                type: 'showArticleSentences',
-                                sentences: sentences
-                            }, '*');
+            console.log('Iframe document loaded');
+            // Wait for the network to be initialized by vis.js
+            const checkNetwork = setInterval(function() {
+                if (typeof network !== 'undefined') {
+                    clearInterval(checkNetwork);
+                    console.log('Network object found:', network);
+                    // Add click event listener
+                    network.on('click', function(params) {
+                        console.log('Click event triggered:', params);
+                        if (params.nodes.length > 0) {
+                            const nodeId = params.nodes[0];
+                            const node = network.body.nodes[nodeId];
+                            console.log('Clicked node:', node);
+                            // Check if the node is an article node (grey square)
+                            if (node.options.shape === 'square' && node.options.color === 'lightgrey') {
+                                const sentences = node.options.title || 'No sentences available.';
+                                console.log('Article node clicked, sentences:', sentences);
+                                // Send the sentences to the parent window
+                                window.parent.postMessage({
+                                    type: 'showArticleSentences',
+                                    sentences: sentences
+                                }, '*');
+                            } else {
+                                console.log('Clicked node is not an article node:', node.options);
+                            }
+                        } else {
+                            console.log('No nodes selected in click event');
                         }
-                    }
-                });
-            }
+                    });
+                } else {
+                    console.log('Network object not found yet...');
+                }
+            }, 100); // Check every 100ms until network is found
         });
     </script>
     """
