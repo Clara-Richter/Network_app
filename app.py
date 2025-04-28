@@ -105,12 +105,24 @@ def generate_graph():
     logger.debug(f"Adding root node: {root_node}")
     net.add_node(root_node, color="blue", label=root_node)
 
-    # First-level nodes: Unique values from "[sheet_name] mentioned"
+    # Define a list of colors for entities
+    color_list = [
+        "#FF6347", "#FFD700", "#ADFF2F", "#40E0D0", "#FF69B4", 
+        "#BA55D3", "#CD853F", "#20B2AA", "#F08080", "#7B68EE"
+    ]
+    # Map entities to colors
     entities = df[f'{sheet_name} mentioned'].unique()
+    entity_colors = {}
+    for i, entity in enumerate(entities):
+        entity_str = str(entity) if pd.notnull(entity) else "Unknown Entity"
+        entity_colors[entity_str] = color_list[i % len(color_list)]  # Cycle through colors
+
+    # First-level nodes: Unique values from "[sheet_name] mentioned"
     logger.debug(f"Entities found: {entities}")
     for entity in entities:
         entity_str = str(entity) if pd.notnull(entity) else "Unknown Entity"
-        net.add_node(entity_str, color="grey", label=entity_str)
+        color = entity_colors[entity_str]
+        net.add_node(entity_str, color=color, label=entity_str)
         net.add_edge(root_node, entity_str, color="grey")
 
     # Second-level nodes: Articles for each entity
@@ -132,8 +144,10 @@ def generate_graph():
             date_str = "Unknown date"
         article_node_id = f"{entity} - {article} - {idx}"  # Ensure uniqueness with row index
         article_label = f"{article} ({date_str})"
+        # Use the same color as the parent entity
+        color = entity_colors[entity]
         logger.debug(f"Adding article node: {article_node_id}")
-        net.add_node(article_node_id, color="lightgrey", shape="square", label=article_label, title=sentences)
+        net.add_node(article_node_id, color=color, shape="square", label=article_label, title=sentences)
         net.add_edge(entity, article_node_id, color="black")
 
     # Handle search term (highlight matching nodes)
