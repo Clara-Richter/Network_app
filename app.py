@@ -8,6 +8,7 @@ import logging
 import tempfile
 import os
 import json
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -118,11 +119,21 @@ def generate_graph():
         entity = str(row[f'{sheet_name} mentioned']) if pd.notnull(row[f'{sheet_name} mentioned']) else "Unknown Entity"
         article = str(row['Article']) if pd.notnull(row['Article']) else "Unknown Article"
         sentences = row[f'{sheet_name} Sentences'] if pd.notnull(row[f'{sheet_name} Sentences']) else "No details"
-        date = str(row['Date']) if pd.notnull(row['Date']) else "Unknown date"
+        date = row['Date']
+        # Format the date to "Feb. 27, 2025"
+        if pd.notnull(date):
+            try:
+                date_obj = pd.to_datetime(date)
+                date_str = date_obj.strftime("%b. %d, %Y")
+            except Exception as e:
+                logger.warning(f"Failed to format date '{date}': {str(e)}")
+                date_str = "Unknown date"
+        else:
+            date_str = "Unknown date"
         article_node_id = f"{entity} - {article} - {idx}"  # Ensure uniqueness with row index
-        article_label = f"{article} ({date})"
+        article_label = f"{article} ({date_str})"
         logger.debug(f"Adding article node: {article_node_id}")
-        net.add_node(article_node_id, color="white", label=article_label, title=sentences)
+        net.add_node(article_node_id, color="lightgrey", shape="square", label=article_label, title=sentences)
         net.add_edge(entity, article_node_id, color="black")
 
     # Handle search term (highlight matching nodes)
