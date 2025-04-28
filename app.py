@@ -97,7 +97,7 @@ def generate_graph():
 
     # Initialize network
     logger.debug("Initializing network graph")
-    net = Network(height="590px", width="100%", notebook=True)
+    net = Network(height="100%", width="100%", notebook=True)
 
     # Root node: Sheet name (e.g., "Company", "Country", "Program")
     root_node = sheet_name
