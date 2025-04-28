@@ -34,6 +34,7 @@
             height: 590px;
             border: 1px solid #000;
             background-color: #fff;
+            display: flex; /* Use flex to layout graph and side panel */
         }
         .graph_container iframe {
             width: 100%;
@@ -42,8 +43,20 @@
             display: block;
         }
         #graphContainer {
-            width: 100%;
+            flex: 3; /* Graph takes 3/4 of the space */
             height: 590px;
+        }
+        #sidePanel {
+            flex: 1; /* Side panel takes 1/4 of the space */
+            height: 590px;
+            border-left: 1px solid #000;
+            padding: 10px;
+            overflow-y: auto;
+            background-color: #f0f0f0;
+            display: none; /* Hidden by default */
+        }
+        #sidePanel h3 {
+            margin-top: 0;
         }
         .filter-buttons button {
             display: block;
@@ -54,7 +67,7 @@
         }
         .filter-buttons button.active {
             font-weight: bold;
-            background-color: rgba(255, 255, 0, 0.5); /* Yellow highlight for active button */
+            background-color: rgba(255, 255, 0, 0.5);
         }
         #loading {
             display: none;
@@ -92,6 +105,10 @@
         <div class="graph_container">
             <div id="loading">Loading...</div>
             <div id="graphContainer"></div>
+            <div id="sidePanel">
+                <h3>Article Sentences</h3>
+                <p id="articleSentences">Click an article node to view its sentences.</p>
+            </div>
         </div>
     </div>
 
@@ -108,6 +125,11 @@
             // Add active class to the clicked button
             const clickedButton = document.querySelector(`.filter-buttons button[onclick="generateGraph('${sheetName}')"]`);
             clickedButton.classList.add('active');
+            // Reset side panel when generating a new graph
+            const sidePanel = document.getElementById('sidePanel');
+            const articleSentences = document.getElementById('articleSentences');
+            sidePanel.style.display = 'none';
+            articleSentences.textContent = 'Click an article node to view its sentences.';
             submitForm(sheetName);
         }
 
@@ -158,6 +180,16 @@
             };
             xhr.send(formData);
         }
+
+        // Listen for messages from the iframe to update the side panel
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'showArticleSentences') {
+                const sidePanel = document.getElementById('sidePanel');
+                const articleSentences = document.getElementById('articleSentences');
+                sidePanel.style.display = 'block';
+                articleSentences.textContent = event.data.sentences || 'No sentences available.';
+            }
+        });
     </script>
 </body>
 </html>
