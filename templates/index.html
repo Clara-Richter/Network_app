@@ -53,7 +53,7 @@
             padding: 10px;
             overflow-y: auto;
             background-color: #f0f0f0;
-            display: none; /* Hidden by default */
+            display: block; /* Hidden by default */
         }
         #sidePanel h3 {
             margin-top: 0;
@@ -128,7 +128,7 @@
             // Reset side panel when generating a new graph
             const sidePanel = document.getElementById('sidePanel');
             const articleSentences = document.getElementById('articleSentences');
-            sidePanel.style.display = 'none';
+            sidePanel.style.display = 'block';
             articleSentences.textContent = 'Click an article node to view its sentences.';
             submitForm(sheetName);
         }
