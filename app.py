@@ -43,14 +43,40 @@ def validate_excel(df, sheet_name):
     return True, None
 
 def save_graph(net, filename):
-    """Save the network graph to a temporary file with default pyvis styles."""
+    """Save the network graph to a temporary file with custom event handling."""
     logger.debug(f"Saving graph to {filename}")
+    custom_js = """
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure network is defined by pyvis
+            if (typeof network !== 'undefined') {
+                network.on('click', function(params) {
+                    if (params.nodes.length > 0) {
+                        const nodeId = params.nodes[0];
+                        const node = network.body.nodes[nodeId];
+                        // Check if the node is an article node (grey square)
+                        if (node.options.shape === 'square' && node.options.color === 'lightgrey') {
+                            const sentences = node.options.title || 'No sentences available.';
+                            // Send the sentences to the parent window
+                            window.parent.postMessage({
+                                type: 'showArticleSentences',
+                                sentences: sentences
+                            }, '*');
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+    """
     temp_dir = tempfile.gettempdir()
     temp_filename = os.path.join(temp_dir, f"graph_{uuid4().hex}.html")
     logger.debug(f"Saving to temporary file: {temp_filename}")
     net.save_graph(temp_filename)
     with open(temp_filename, "r") as f:
         graph_html = f.read()
+    # Inject the custom JavaScript before the closing </body> tag
+    graph_html = graph_html.replace('</body>', custom_js + '</body>')
     os.remove(temp_filename)  # Clean up
     return graph_html
 
@@ -105,24 +131,12 @@ def generate_graph():
     logger.debug(f"Adding root node: {root_node}")
     net.add_node(root_node, color="blue", label=root_node)
 
-    # Define a list of colors for entities
-    color_list = [
-        "#FF6347", "#FFD700", "#ADFF2F", "#40E0D0", "#FF69B4", 
-        "#BA55D3", "#CD853F", "#20B2AA", "#F08080", "#7B68EE"
-    ]
-    # Map entities to colors
-    entities = df[f'{sheet_name} mentioned'].unique()
-    entity_colors = {}
-    for i, entity in enumerate(entities):
-        entity_str = str(entity) if pd.notnull(entity) else "Unknown Entity"
-        entity_colors[entity_str] = color_list[i % len(color_list)]  # Cycle through colors
-
     # First-level nodes: Unique values from "[sheet_name] mentioned"
+    entities = df[f'{sheet_name} mentioned'].unique()
     logger.debug(f"Entities found: {entities}")
     for entity in entities:
         entity_str = str(entity) if pd.notnull(entity) else "Unknown Entity"
-        color = entity_colors[entity_str]
-        net.add_node(entity_str, color=color, label=entity_str)
+        net.add_node(entity_str, color="grey", label=entity_str)
         net.add_edge(root_node, entity_str, color="grey")
 
     # Second-level nodes: Articles for each entity
@@ -144,10 +158,8 @@ def generate_graph():
             date_str = "Unknown date"
         article_node_id = f"{entity} - {article} - {idx}"  # Ensure uniqueness with row index
         article_label = f"{article} ({date_str})"
-        # Use the same color as the parent entity
-        color = entity_colors[entity]
         logger.debug(f"Adding article node: {article_node_id}")
-        net.add_node(article_node_id, color=color, shape="square", label=article_label, title=sentences)
+        net.add_node(article_node_id, color="lightgrey", shape="square", label=article_label, title=sentences)
         net.add_edge(entity, article_node_id, color="black")
 
     # Handle search term (highlight matching nodes)
