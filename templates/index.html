@@ -9,7 +9,7 @@
             font-size: 18px;
             font-family: system-ui;
             margin: 20px;
-            min-height: 100vh; /* Ensure body takes full viewport height */
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
@@ -17,16 +17,16 @@
             display: flex;
             flex-direction: column;
             width: 100%;
-            min-height: 590px; /* Initial height */
+            min-height: 590px;
         }
         .container {
             display: flex;
             width: 100%;
-            height: 100%; /* Inherit height from parent */
+            height: 100%;
         }
         .options {
             width: 300px;
-            height: 100%; /* Inherit height from parent */
+            height: 100%;
             border: 1px solid #000;
             background-color: rgba(200, 125, 230, 0.676);
             padding: 10px;
@@ -45,7 +45,7 @@
         .vertical-divider {
             height: 5px;
             background-color: #ccc;
-            cursor: ns-resize; /* Vertical resize cursor */
+            cursor: ns-resize;
             width: 100%;
         }
         .vertical-divider:hover {
@@ -53,7 +53,7 @@
         }
         .graph_container {
             flex: 1;
-            height: 100%; /* Inherit height from parent */
+            height: 100%;
             border: 1px solid #000;
             background-color: #fff;
             display: flex;
@@ -67,11 +67,11 @@
         }
         #graphContainer {
             flex: 3;
-            height: 100%; /* Inherit height from parent */
+            height: 100%;
         }
         #sidePanel {
             flex: 1;
-            height: 100%; /* Inherit height from parent */
+            height: 100%;
             border-left: 1px solid #000;
             padding: 10px;
             overflow-y: auto;
@@ -98,7 +98,7 @@
             padding: 20px;
         }
         .placeholder {
-            flex: 1; /* Take remaining vertical space */
+            flex: 1;
             width: 100%;
         }
     </style>
@@ -124,7 +124,7 @@
                 <label for="fileSelect"><b>Upload Excel File:</b></label>
                 <input id="fileSelect" type="file" accept=".xlsx, .xls" />
                 <br><br>
-                <form id="uploadForm" enctype="multipart/form-data">
+                <form id="uploadForm" enctype="multipart-form-data">
                     <label for="search_term">Search for term(s):</label>
                     <input type="text" id="search_term" name="search_term"><br>
                     <button type="button" onclick="submitForm()">Search</button>
@@ -176,7 +176,21 @@
             const searchTerm = document.getElementById('search_term').value;
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('sheet_name', sheetName || 'Program');
+
+            // If sheetName is not provided (e.g., called from search), use the active filter
+            let activeSheetName = sheetName;
+            if (!activeSheetName) {
+                const activeButton = document.querySelector('.filter-buttons button.active');
+                if (activeButton) {
+                    // Extract the sheet name from the onclick attribute
+                    const onclickText = activeButton.getAttribute('onclick'); // e.g., "generateGraph('Company')"
+                    const match = onclickText.match(/'([^']+)'/); // Extract the sheet name between single quotes
+                    activeSheetName = match ? match[1] : 'Program'; // Fallback to 'Program' if no active filter
+                } else {
+                    activeSheetName = 'Program'; // Fallback if no active filter
+                }
+            }
+            formData.append('sheet_name', activeSheetName);
             formData.append('search_term', searchTerm);
 
             const xhr = new XMLHttpRequest();
@@ -224,7 +238,7 @@
             }
         });
 
-        // Handle horizontal resizing (existing functionality)
+        // Handle horizontal resizing
         const divider = document.getElementById('divider');
         const options = document.querySelector('.options');
         const graphContainer = document.querySelector('.graph_container');
@@ -254,7 +268,7 @@
             document.body.style.cursor = 'default';
         });
 
-        // Handle vertical resizing (new functionality)
+        // Handle vertical resizing
         const verticalDivider = document.getElementById('verticalDivider');
         const mainContainer = document.getElementById('mainContainer');
         const container = document.getElementById('container');
@@ -269,10 +283,8 @@
             if (isDraggingVertical) {
                 const mainContainerRect = mainContainer.getBoundingClientRect();
                 const newHeight = e.clientY - mainContainerRect.top;
-
-                // Set minimum and maximum heights to prevent containers from becoming too small or too large
-                const minHeight = 300; // Minimum height for the container
-                const maxHeight = window.innerHeight - 150; // Leave some space for header and margins
+                const minHeight = 300;
+                const maxHeight = window.innerHeight - 150;
 
                 if (newHeight >= minHeight && newHeight <= maxHeight) {
                     mainContainer.style.minHeight = newHeight + 'px';
