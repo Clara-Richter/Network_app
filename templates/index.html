@@ -101,6 +101,16 @@
             flex: 1;
             width: 100%;
         }
+        /* New divider for side panel */
+        .side-panel-divider {
+            width: 5px;
+            background-color: #ccc;
+            cursor: ew-resize;
+            height: 100%;
+        }
+        .side-panel-divider:hover {
+            background-color: #999;
+        }
     </style>
     <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
 </head>
@@ -134,6 +144,7 @@
             <div class="graph_container">
                 <div id="loading">Loading...</div>
                 <div id="graphContainer"></div>
+                <div class="side-panel-divider" id="sidePanelDivider"></div>
                 <div id="sidePanel">
                     <h3 id="sidePanelHeading">Article Sentences</h3>
                     <p id="articleSentences">Click an article node to view its sentences.</p>
@@ -245,10 +256,10 @@
             }
         });
 
-        // Handle horizontal resizing
+        // Handle horizontal resizing for options panel
         const divider = document.getElementById('divider');
         const options = document.querySelector('.options');
-        const graphContainer = document.querySelector('.graph_container');
+        const graphContainerOuter = document.querySelector('.graph_container');
         let isDraggingHorizontal = false;
 
         divider.addEventListener('mousedown', function(e) {
@@ -265,13 +276,44 @@
 
                 if (newOptionsWidth >= minOptionsWidth && newOptionsWidth <= maxOptionsWidth) {
                     options.style.width = newOptionsWidth + 'px';
-                    graphContainer.style.width = (containerRect.width - newOptionsWidth - divider.offsetWidth) + 'px';
+                    graphContainerOuter.style.width = (containerRect.width - newOptionsWidth - divider.offsetWidth) + 'px';
                 }
             }
         });
 
         document.addEventListener('mouseup', function() {
             isDraggingHorizontal = false;
+            document.body.style.cursor = 'default';
+        });
+
+        // Handle horizontal resizing for side panel
+        const sidePanelDivider = document.getElementById('sidePanelDivider');
+        const graphContainer = document.getElementById('graphContainer');
+        const sidePanel = document.getElementById('sidePanel');
+        let isDraggingSidePanel = false;
+
+        sidePanelDivider.addEventListener('mousedown', function(e) {
+            isDraggingSidePanel = true;
+            document.body.style.cursor = 'ew-resize';
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (isDraggingSidePanel) {
+                const graphContainerRect = graphContainerOuter.getBoundingClientRect();
+                const newGraphWidth = e.clientX - graphContainerRect.left;
+                const minGraphWidth = 300; // Minimum width for the graph
+                const minSidePanelWidth = 200; // Minimum width for the side panel
+                const maxGraphWidth = graphContainerRect.width - minSidePanelWidth - sidePanelDivider.offsetWidth;
+
+                if (newGraphWidth >= minGraphWidth && newGraphWidth <= maxGraphWidth) {
+                    graphContainer.style.width = newGraphWidth + 'px';
+                    sidePanel.style.width = (graphContainerRect.width - newGraphWidth - sidePanelDivider.offsetWidth) + 'px';
+                }
+            }
+        });
+
+        document.addEventListener('mouseup', function() {
+            isDraggingSidePanel = false;
             document.body.style.cursor = 'default';
         });
 
