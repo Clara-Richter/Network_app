@@ -70,6 +70,8 @@ def save_graph(net, filename):
                 if (typeof network !== 'undefined') {
                     clearInterval(checkNetwork);
                     console.log('Network object found:', network);
+                    // Force the network to fit the container
+                    network.fit();
                     // Add selectNode event listener
                     network.on('selectNode', function(params) {
                         console.log('selectNode event triggered:', params);
@@ -77,7 +79,7 @@ def save_graph(net, filename):
                             const nodeId = params.nodes[0];
                             const node = network.body.nodes[nodeId];
                             console.log('Selected node:', node);
-                            // Check if the node is an article node (grey square)
+                            // Check if the node is an article node (square shape)
                             if (node.options.shape === 'square') {
                                 const sentences = node.options.title || 'No sentences available.';
                                 console.log('Article node selected, sentences:', sentences);
@@ -153,9 +155,9 @@ def generate_graph():
         logger.error(f"Validation failed for sheet {sheet_name}: {error}")
         return jsonify({"error": error}), 400
 
-    # Initialize network
+    # Initialize network with fixed pixel height and full width
     logger.debug("Initializing network graph")
-    net = Network(height="100%", width="100%", notebook=True)
+    net = Network(height="590px", width="100%", notebook=True)
 
     # Root node: Sheet name (e.g., "Company", "Country", "Program")
     root_node = sheet_name
