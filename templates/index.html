@@ -135,7 +135,7 @@
                 <div id="loading">Loading...</div>
                 <div id="graphContainer"></div>
                 <div id="sidePanel">
-                    <h3>Article Sentences</h3>
+                    <h3 id="sidePanelHeading">Article Sentences</h3>
                     <p id="articleSentences">Click an article node to view its sentences.</p>
                 </div>
             </div>
@@ -159,8 +159,10 @@
             clickedButton.classList.add('active');
             // Reset side panel when generating a new graph
             const sidePanel = document.getElementById('sidePanel');
+            const sidePanelHeading = document.getElementById('sidePanelHeading');
             const articleSentences = document.getElementById('articleSentences');
             sidePanel.style.display = 'none';
+            sidePanelHeading.textContent = 'Article Sentences'; // Reset heading
             articleSentences.textContent = 'Click an article node to view its sentences.';
             submitForm(sheetName);
         }
@@ -183,11 +185,11 @@
                 const activeButton = document.querySelector('.filter-buttons button.active');
                 if (activeButton) {
                     // Extract the sheet name from the onclick attribute
-                    const onclickText = activeButton.getAttribute('onclick'); // e.g., "generateGraph('Company')"
-                    const match = onclickText.match(/'([^']+)'/); // Extract the sheet name between single quotes
-                    activeSheetName = match ? match[1] : 'Program'; // Fallback to 'Program' if no active filter
+                    const onclickText = activeButton.getAttribute('onclick');
+                    const match = onclickText.match(/'([^']+)'/);
+                    activeSheetName = match ? match[1] : 'Program';
                 } else {
-                    activeSheetName = 'Program'; // Fallback if no active filter
+                    activeSheetName = 'Program';
                 }
             }
             formData.append('sheet_name', activeSheetName);
@@ -232,8 +234,13 @@
             console.log('Message received in parent:', event.data);
             if (event.data.type === 'showArticleSentences') {
                 const sidePanel = document.getElementById('sidePanel');
+                const sidePanelHeading = document.getElementById('sidePanelHeading');
                 const articleSentences = document.getElementById('articleSentences');
                 sidePanel.style.display = 'block';
+                // Update the heading with article label and entity name
+                const articleLabel = event.data.articleLabel || 'Unknown Article';
+                const entityName = event.data.entityName || 'Unknown Entity';
+                sidePanelHeading.textContent = `${articleLabel} - ${entityName}`;
                 articleSentences.textContent = event.data.sentences || 'No sentences available.';
             }
         });
@@ -270,7 +277,7 @@
 
         // Handle vertical resizing
         const verticalDivider = document.getElementById('verticalDivider');
-        const mainContainer = document.getElementById('mainContainer');
+        const mainContainer = document.getElementById('main "mainContainer');
         const container = document.getElementById('container');
         let isDraggingVertical = false;
 
