@@ -9,22 +9,24 @@
             font-size: 18px;
             font-family: system-ui;
             margin: 20px;
+            min-height: 100vh; /* Ensure body takes full viewport height */
+            display: flex;
+            flex-direction: column;
         }
-        input, button {
-            font-size: 18px;
-            font-family: system-ui;
-            margin: 5px;
-            padding: 5px;
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            min-height: 590px; /* Initial height */
         }
         .container {
             display: flex;
-            gap: 0; /* Remove gap to allow divider to sit flush */
             width: 100%;
-            height: 590px; /* Match the height of the containers */
+            height: 100%; /* Inherit height from parent */
         }
         .options {
-            width: 300px; /* Initial width instead of max-width */
-            height: 590px;
+            width: 300px;
+            height: 100%; /* Inherit height from parent */
             border: 1px solid #000;
             background-color: rgba(200, 125, 230, 0.676);
             padding: 10px;
@@ -34,15 +36,24 @@
         .divider {
             width: 5px;
             background-color: #ccc;
-            cursor: ew-resize; /* Horizontal resize cursor */
+            cursor: ew-resize;
             height: 100%;
         }
         .divider:hover {
             background-color: #999;
         }
+        .vertical-divider {
+            height: 5px;
+            background-color: #ccc;
+            cursor: ns-resize; /* Vertical resize cursor */
+            width: 100%;
+        }
+        .vertical-divider:hover {
+            background-color: #999;
+        }
         .graph_container {
-            flex: 1; /* Take remaining space */
-            height: 590px;
+            flex: 1;
+            height: 100%; /* Inherit height from parent */
             border: 1px solid #000;
             background-color: #fff;
             display: flex;
@@ -56,11 +67,11 @@
         }
         #graphContainer {
             flex: 3;
-            height: 590px;
+            height: 100%; /* Inherit height from parent */
         }
         #sidePanel {
             flex: 1;
-            height: 590px;
+            height: 100%; /* Inherit height from parent */
             border-left: 1px solid #000;
             padding: 10px;
             overflow-y: auto;
@@ -86,6 +97,10 @@
             text-align: center;
             padding: 20px;
         }
+        .placeholder {
+            flex: 1; /* Take remaining vertical space */
+            width: 100%;
+        }
     </style>
     <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css">
 </head>
@@ -93,37 +108,41 @@
     <h1>Network Analysis</h1>
     <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script src="https://unpkg.com/tippy.js@6"></script>
-    <div class="container">
-        <div class="options">
-            <h2>FILTERS:</h2>
-            <div class="filter-buttons">
-                <button onclick="generateGraph('Company')">Company</button>
-                <button onclick="generateGraph('Country')">Country</button>
-                <button onclick="generateGraph('Program')">Program</button>
-                <button onclick="generateGraph('Combatant Command')">Combatant Command</button>
-                <button onclick="generateGraph('Support Infrastructure')">Support Infrastructure</button>
-                <button onclick="generateGraph('Raw Materials')">Raw Materials</button>
+    <div class="main-container" id="mainContainer">
+        <div class="container" id="container">
+            <div class="options">
+                <h2>FILTERS:</h2>
+                <div class="filter-buttons">
+                    <button onclick="generateGraph('Company')">Company</button>
+                    <button onclick="generateGraph('Country')">Country</button>
+                    <button onclick="generateGraph('Program')">Program</button>
+                    <button onclick="generateGraph('Combatant Command')">Combatant Command</button>
+                    <button onclick="generateGraph('Support Infrastructure')">Support Infrastructure</button>
+                    <button onclick="generateGraph('Raw Materials')">Raw Materials</button>
+                </div>
+                <br>
+                <label for="fileSelect"><b>Upload Excel File:</b></label>
+                <input id="fileSelect" type="file" accept=".xlsx, .xls" />
+                <br><br>
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <label for="search_term">Search for term(s):</label>
+                    <input type="text" id="search_term" name="search_term"><br>
+                    <button type="button" onclick="submitForm()">Search</button>
+                </form>
             </div>
-            <br>
-            <label for="fileSelect"><b>Upload Excel File:</b></label>
-            <input id="fileSelect" type="file" accept=".xlsx, .xls" />
-            <br><br>
-            <form id="uploadForm" enctype="multipart/form-data">
-                <label for="search_term">Search for term(s):</label>
-                <input type="text" id="search_term" name="search_term"><br>
-                <button type="button" onclick="submitForm()">Search</button>
-            </form>
-        </div>
-        <div class="divider" id="divider"></div>
-        <div class="graph_container">
-            <div id="loading">Loading...</div>
-            <div id="graphContainer"></div>
-            <div id="sidePanel">
-                <h3>Article Sentences</h3>
-                <p id="articleSentences">Click an article node to view its sentences.</p>
+            <div class="divider" id="divider"></div>
+            <div class="graph_container">
+                <div id="loading">Loading...</div>
+                <div id="graphContainer"></div>
+                <div id="sidePanel">
+                    <h3>Article Sentences</h3>
+                    <p id="articleSentences">Click an article node to view its sentences.</p>
+                </div>
             </div>
         </div>
+        <div class="vertical-divider" id="verticalDivider"></div>
     </div>
+    <div class="placeholder"></div>
 
     <script>
         function generateGraph(sheetName) {
@@ -205,35 +224,65 @@
             }
         });
 
-        // Handle resizing functionality
+        // Handle horizontal resizing (existing functionality)
         const divider = document.getElementById('divider');
         const options = document.querySelector('.options');
         const graphContainer = document.querySelector('.graph_container');
-        let isDragging = false;
+        let isDraggingHorizontal = false;
 
         divider.addEventListener('mousedown', function(e) {
-            isDragging = true;
+            isDraggingHorizontal = true;
             document.body.style.cursor = 'ew-resize';
         });
 
         document.addEventListener('mousemove', function(e) {
-            if (!isDragging) return;
+            if (isDraggingHorizontal) {
+                const containerRect = document.querySelector('.container').getBoundingClientRect();
+                const newOptionsWidth = e.clientX - containerRect.left;
+                const minOptionsWidth = 200;
+                const maxOptionsWidth = containerRect.width - 300;
 
-            const containerRect = document.querySelector('.container').getBoundingClientRect();
-            const newOptionsWidth = e.clientX - containerRect.left;
-
-            // Set minimum and maximum widths to prevent containers from becoming too small or too large
-            const minOptionsWidth = 200; // Minimum width for options panel
-            const maxOptionsWidth = containerRect.width - 300; // Ensure graph container has at least 300px
-
-            if (newOptionsWidth >= minOptionsWidth && newOptionsWidth <= maxOptionsWidth) {
-                options.style.width = newOptionsWidth + 'px';
-                graphContainer.style.width = (containerRect.width - newOptionsWidth - divider.offsetWidth) + 'px';
+                if (newOptionsWidth >= minOptionsWidth && newOptionsWidth <= maxOptionsWidth) {
+                    options.style.width = newOptionsWidth + 'px';
+                    graphContainer.style.width = (containerRect.width - newOptionsWidth - divider.offsetWidth) + 'px';
+                }
             }
         });
 
         document.addEventListener('mouseup', function() {
-            isDragging = false;
+            isDraggingHorizontal = false;
+            document.body.style.cursor = 'default';
+        });
+
+        // Handle vertical resizing (new functionality)
+        const verticalDivider = document.getElementById('verticalDivider');
+        const mainContainer = document.getElementById('mainContainer');
+        const container = document.getElementById('container');
+        let isDraggingVertical = false;
+
+        verticalDivider.addEventListener('mousedown', function(e) {
+            isDraggingVertical = true;
+            document.body.style.cursor = 'ns-resize';
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (isDraggingVertical) {
+                const mainContainerRect = mainContainer.getBoundingClientRect();
+                const newHeight = e.clientY - mainContainerRect.top;
+
+                // Set minimum and maximum heights to prevent containers from becoming too small or too large
+                const minHeight = 300; // Minimum height for the container
+                const maxHeight = window.innerHeight - 150; // Leave some space for header and margins
+
+                if (newHeight >= minHeight && newHeight <= maxHeight) {
+                    mainContainer.style.minHeight = newHeight + 'px';
+                    container.style.height = newHeight + 'px';
+                }
+            }
+        });
+
+        document.addEventListener('mouseup', function() {
+            isDraggingVertical = false;
             document.body.style.cursor = 'default';
         });
     </script>
