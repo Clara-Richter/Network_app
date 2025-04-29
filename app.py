@@ -16,6 +16,22 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+# Define a color palette for article names
+COLOR_PALETTE = [
+    "#FF6B6B",  # Coral
+    "#4ECDC4",  # Turquoise
+    "#45B7D1",  # Sky Blue
+    "#96CEB4",  # Sage Green
+    "#FFEEAD",  # Light Yellow
+    "#D4A5A5",  # Dusty Rose
+    "#9B59B6",  # Purple
+    "#3498DB",  # Blue
+    "#E74C3C",  # Red
+    "#2ECC71",  # Green
+    "#F1C40F",  # Yellow
+    "#E67E22",  # Orange
+]
+
 def validate_excel(df, sheet_name):
     """Validate that the Excel sheet contains required columns, ignoring case and whitespace."""
     logger.debug(f"Validating sheet: {sheet_name}")
@@ -54,27 +70,27 @@ def save_graph(net, filename):
                 if (typeof network !== 'undefined') {
                     clearInterval(checkNetwork);
                     console.log('Network object found:', network);
-                    // Add click event listener
-                    network.on('click', function(params) {
-                        console.log('Click event triggered:', params);
+                    // Add selectNode event listener
+                    network.on('selectNode', function(params) {
+                        console.log('selectNode event triggered:', params);
                         if (params.nodes.length > 0) {
                             const nodeId = params.nodes[0];
                             const node = network.body.nodes[nodeId];
-                            console.log('Clicked node:', node);
+                            console.log('Selected node:', node);
                             // Check if the node is an article node (grey square)
-                            if (node.options.shape === 'square' && node.options.color === 'lightgrey') {
+                            if (node.options.shape === 'square') {
                                 const sentences = node.options.title || 'No sentences available.';
-                                console.log('Article node clicked, sentences:', sentences);
+                                console.log('Article node selected, sentences:', sentences);
                                 // Send the sentences to the parent window
                                 window.parent.postMessage({
                                     type: 'showArticleSentences',
                                     sentences: sentences
                                 }, '*');
                             } else {
-                                console.log('Clicked node is not an article node:', node.options);
+                                console.log('Selected node is not an article node:', node.options);
                             }
                         } else {
-                            console.log('No nodes selected in click event');
+                            console.log('No nodes selected in selectNode event');
                         }
                     });
                 } else {
@@ -139,7 +155,7 @@ def generate_graph():
 
     # Initialize network
     logger.debug("Initializing network graph")
-    net = Network(height="590px", width="100%", notebook=True)
+    net = Network(height="100%", width="100%", notebook=True)
 
     # Root node: Sheet name (e.g., "Company", "Country", "Program")
     root_node = sheet_name
@@ -153,6 +169,16 @@ def generate_graph():
         entity_str = str(entity) if pd.notnull(entity) else "Unknown Entity"
         net.add_node(entity_str, color="grey", label=entity_str)
         net.add_edge(root_node, entity_str, color="grey")
+
+    # Map article names to colors
+    article_to_color = {}
+    unique_articles = df['Article'].unique()
+    logger.debug(f"Unique articles: {unique_articles}")
+    for idx, article in enumerate(unique_articles):
+        article_str = str(article) if pd.notnull(article) else "Unknown Article"
+        color = COLOR_PALETTE[idx % len(COLOR_PALETTE)]  # Cycle through the palette
+        article_to_color[article_str] = color
+        logger.debug(f"Assigned color {color} to article '{article_str}'")
 
     # Second-level nodes: Articles for each entity
     logger.debug("Adding article nodes and edges")
@@ -173,8 +199,10 @@ def generate_graph():
             date_str = "Unknown date"
         article_node_id = f"{entity} - {article} - {idx}"  # Ensure uniqueness with row index
         article_label = f"{article} ({date_str})"
-        logger.debug(f"Adding article node: {article_node_id}")
-        net.add_node(article_node_id, color="lightgrey", shape="square", label=article_label, title=sentences)
+        # Get the color for this article name
+        article_color = article_to_color[article]
+        logger.debug(f"Adding article node: {article_node_id} with color {article_color}")
+        net.add_node(article_node_id, color=article_color, shape="square", label=article_label, title=sentences)
         net.add_edge(entity, article_node_id, color="black")
 
     # Handle search term (highlight matching nodes)
