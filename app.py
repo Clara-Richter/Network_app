@@ -82,11 +82,27 @@ def save_graph(net, filename):
                             // Check if the node is an article node (square shape)
                             if (node.options.shape === 'square') {
                                 const sentences = node.options.title || 'No sentences available.';
-                                console.log('Article node selected, sentences:', sentences);
-                                // Send the sentences to the parent window
+                                const articleLabel = node.options.label || 'Unknown Article';
+                                console.log('Article node selected, label:', articleLabel);
+                                // Find the entity node this article node is connected to
+                                let entityName = 'Unknown Entity';
+                                const edges = network.getConnectedEdges(nodeId);
+                                for (let edgeId of edges) {
+                                    const edge = network.body.edges[edgeId];
+                                    const fromNode = network.body.nodes[edge.fromId];
+                                    // The entity node should not be the root (e.g., "Company") and not a search term (purple)
+                                    if (fromNode.options.shape !== 'square' && fromNode.options.color !== 'purple' && fromNode.options.color !== 'blue') {
+                                        entityName = fromNode.options.label || 'Unknown Entity';
+                                        break;
+                                    }
+                                }
+                                console.log('Entity name:', entityName);
+                                // Send the sentences, article label, and entity name to the parent window
                                 window.parent.postMessage({
                                     type: 'showArticleSentences',
-                                    sentences: sentences
+                                    sentences: sentences,
+                                    articleLabel: articleLabel,
+                                    entityName: entityName
                                 }, '*');
                             } else {
                                 console.log('Selected node is not an article node:', node.options);
