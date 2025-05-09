@@ -238,24 +238,47 @@ def generate_graph():
 
     # Set physics options
     logger.debug("Setting physics options")
+#     net.set_options(json.dumps({
+#     "physics": {
+#         "enabled": True,  # Keep physics enabled for initial layout
+#         "barnesHut": {
+#             "centralGravity": 0.1,  # Slight pull to keep nodes cohesive
+#             "springLength": 100,    # Shorter springs for tighter layout
+#             "springConstant": 0.1,  # Stiffer springs to reduce movement
+#             "damping": 0.5,         # Higher damping to reduce oscillations
+#             "avoidOverlap": 1       # Keep this to prevent node overlap
+#         },
+#         "minVelocity": 1,           # Higher to stop movement sooner
+#         "stabilization": {
+#             "enabled": True,        # Enable stabilization
+#             "iterations": 1000      # Number of iterations for precomputing positions
+#         }
+#     }
+# }))
     net.set_options(json.dumps({
-    "physics": {
-        "enabled": True,  # Keep physics enabled for initial layout
-        "barnesHut": {
-            "centralGravity": 0.1,  # Slight pull to keep nodes cohesive
-            "springLength": 100,    # Shorter springs for tighter layout
-            "springConstant": 0.1,  # Stiffer springs to reduce movement
-            "damping": 0.5,         # Higher damping to reduce oscillations
-            "avoidOverlap": 1       # Keep this to prevent node overlap
+        "physics": {
+            "enabled": True,
+            "barnesHut": {
+                "centralGravity": 0.1,
+                "springLength": 100,
+                "springConstant": 0.1,
+                "damping": 0.5,
+                "avoidOverlap": 1
+            },
+            "minVelocity": 1,
+            "stabilization": {
+                "enabled": True,
+                "iterations": 1000
+            }
         },
-        "minVelocity": 1,           # Higher to stop movement sooner
-        "stabilization": {
-            "enabled": True,        # Enable stabilization
-            "iterations": 1000      # Number of iterations for precomputing positions
+        "layout": {
+            "improvedLayout": True  # Optional: Improves initial layout
+        },
+        # Disable physics after stabilization
+        "physics": {
+            "enabled": False
         }
-    }
-}))
-
+    }))
     # Save and return graph
     filename = f"graph_{uuid4().hex}.html"
     logger.debug(f"Generated graph, saving to {filename}")
