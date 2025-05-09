@@ -239,15 +239,22 @@ def generate_graph():
     # Set physics options
     logger.debug("Setting physics options")
     net.set_options(json.dumps({
-        "physics": {
-            "barnesHut": {
-                "centralGravity": 0,
-                "springLength": 200,
-                "avoidOverlap": 1
-            },
-            "minVelocity": 0.75
+    "physics": {
+        "enabled": True,  # Keep physics enabled for initial layout
+        "barnesHut": {
+            "centralGravity": 0.1,  # Slight pull to keep nodes cohesive
+            "springLength": 100,    # Shorter springs for tighter layout
+            "springConstant": 0.1,  # Stiffer springs to reduce movement
+            "damping": 0.5,         # Higher damping to reduce oscillations
+            "avoidOverlap": 1       # Keep this to prevent node overlap
+        },
+        "minVelocity": 1,           # Higher to stop movement sooner
+        "stabilization": {
+            "enabled": True,        # Enable stabilization
+            "iterations": 1000      # Number of iterations for precomputing positions
         }
-    }))
+    }
+}))
 
     # Save and return graph
     filename = f"graph_{uuid4().hex}.html"
